@@ -72,7 +72,7 @@ app.post('/api/users/:_id/exercises', (async (req, res) => {
     //user stuff
     const user = await User.findById(req.params._id).exec()
     if(user == null){
-        res.json({error:'Unknown user'})
+        res.status(500).json({error:'Unknown user'})
     }
     const username = user.username
 
@@ -99,7 +99,7 @@ app.get('/api/users/:_id/logs', async (req, res) => {
     //user stuff
     const user = await User.findById(req.params._id).exec()
     if(user == null){
-        res.json({error:'Unknown user'})
+        res.status(500).json({error:'Unknown user'})
     }
     const username = user.username
 
