@@ -114,7 +114,7 @@ app.get('/api/users/:_id/logs', async (req, res) => {
 
     res.json(Object.assign(user.toJSON(), {
         count: exercises.length,
-        logs: exercises
+        log: exercises
     }))
 
 })
