@@ -39,7 +39,12 @@ const ExerciseSchema = new Schema({
     toJSON:{
         transform: (doc, ret, options) => {
             const output = Object.assign(ret)
-            output.date = new Date(output.date).toDateString()
+            const date = new Date(output.date)
+
+            //trying to correct timezone
+            date.setTime( date.getTime() + date.getTimezoneOffset()*60*1000 );
+
+            output.date = date.toDateString()
             return output
         }
     }
@@ -98,7 +103,13 @@ app.post('/api/users/:_id/exercises', userByIDMiddleware, (async (req, res) => {
     let date = new Date(req.body.date ?? null)
 
     //correcting the date to today if it's an invalid date
-    if(isNaN(date.getTime())) date = new Date()
+    if(isNaN(date.getTime())) {
+        date = new Date()
+    }
+
+    //trying to correct timezone
+    date.setTime( date.getTime() + date.getTimezoneOffset()*60*1000 );
+
 
     //creating the exercise
     let exercise = await Exercise.create({
@@ -108,7 +119,7 @@ app.post('/api/users/:_id/exercises', userByIDMiddleware, (async (req, res) => {
         date,
     })
 
-    res.json(Object.assign(user.toJSON(), exercise.toJSON()))
+    res.json(Object.assign(exercise.toJSON(), user.toJSON()))
 }))
 
 app.get('/api/users/:_id/logs', userByIDMiddleware, async (req, res) => {
@@ -117,17 +128,19 @@ app.get('/api/users/:_id/logs', userByIDMiddleware, async (req, res) => {
 
     //GET PARAMS
     const {from, to, limit} = req.query
+    const fromDate = new Date(from)
+    const toDate = new Date(to)
 
     //creating the query for getting the right exercises
     let query = Exercise.find({username}).select("-username -_id")
 
-    if(from && !isNaN(new Date(from).getTime())){
+    if(from && !isNaN(fromDate.getTime())){
         query = query.find({date: {$gte: new Date(from)}})
     }
-    if(to && !isNaN(new Date(to).getTime())){
+    if(to && !isNaN(toDate.getTime())){
         query = query.find({date: {$lte: new Date(to)}})
     }
-    if(limit && !isNaN(new Date(limit).getTime())){
+    if(limit){
         query = query.limit(parseInt(req.query.limit, 10))
     }
 
