@@ -53,6 +53,21 @@ const Exercise = mongoose.model('exercise', ExerciseSchema);
 const User = mongoose.model('user', UserSchema);
 //#endregion
 
+const userByIDMiddleware = async function (req, res, next) {
+    let user = null;
+    try {
+        user = await User.findById(req.params._id)
+    } catch (e) {
+    }
+
+    if(user == null){
+        res.status(500).json({error:'Unknown user'})
+    }else{
+        res.locals.user = user
+        next()
+    }
+}
+
 //#region routes
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/views/index.html')
@@ -68,17 +83,18 @@ app.post('/api/users', (async (req, res) => {
     res.json(user)
 }))
 
-app.post('/api/users/:_id/exercises', (async (req, res) => {
-    //user stuff
-    const user = await User.findById(req.params._id).exec()
-    if(user == null){
-        res.status(500).json({error:'Unknown user'})
-    }
+app.post('/api/users/:_id/exercises', userByIDMiddleware, (async (req, res) => {
+    const user = res.locals.user
     const username = user.username
 
     //exercise stuff
     const description = req.body.description;
     const duration = req.body.duration;
+    if(/^[0-9]+$/.test(duration) == false){
+        res.status(500).json({error:'Invalid duration'})
+        return;
+    }
+
     let date = new Date(req.body.date ?? null)
 
     //correcting the date to today if it's an invalid date
@@ -95,12 +111,8 @@ app.post('/api/users/:_id/exercises', (async (req, res) => {
     res.json(Object.assign(user.toJSON(), exercise.toJSON()))
 }))
 
-app.get('/api/users/:_id/logs', async (req, res) => {
-    //user stuff
-    const user = await User.findById(req.params._id).exec()
-    if(user == null){
-        res.status(500).json({error:'Unknown user'})
-    }
+app.get('/api/users/:_id/logs', userByIDMiddleware, async (req, res) => {
+    const user = res.locals.user
     const username = user.username
 
     //GET PARAMS
