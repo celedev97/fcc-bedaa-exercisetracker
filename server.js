@@ -79,7 +79,10 @@ app.post('/api/users/:_id/exercises', (async (req, res) => {
     //exercise stuff
     const description = req.body.description;
     const duration = req.body.duration;
-    const date = new Date(req.body.date ?? null)
+    let date = new Date(req.body.date ?? null)
+
+    //correcting the date to today if it's an invalid date
+    if(isNaN(date.getTime())) date = new Date()
 
     //creating the exercise
     let exercise = await Exercise.create({
@@ -106,9 +109,15 @@ app.get('/api/users/:_id/logs', async (req, res) => {
     //creating the query for getting the right exercises
     let query = Exercise.find({username}).select("-username -_id")
 
-    if(from)    query = query.find({date: {$gte: new Date(from)}})
-    if(to)      query = query.find({date: {$lte: new Date(to)}})
-    if(limit)   query = query.limit(parseInt(req.query.limit, 10))
+    if(from && !isNaN(new Date(from).getTime())){
+        query = query.find({date: {$gte: new Date(from)}})
+    }
+    if(to && !isNaN(new Date(to).getTime())){
+        query = query.find({date: {$lte: new Date(to)}})
+    }
+    if(limit && !isNaN(new Date(limit).getTime())){
+        query = query.limit(parseInt(req.query.limit, 10))
+    }
 
     const exercises = await query.exec()
 
