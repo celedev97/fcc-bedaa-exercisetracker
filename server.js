@@ -100,7 +100,7 @@ app.post('/api/users/:_id/exercises', userByIDMiddleware, (async (req, res) => {
         return;
     }
 
-    let date = new Date(req.body.date ?? null)
+    let date = req.body.date ? new Date(req.body.date) : new Date()
 
     //correcting the date to today if it's an invalid date
     if(isNaN(date.getTime())) {
